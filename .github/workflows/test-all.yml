@@ -1,0 +1,90 @@
+name: Run all tests in every sample
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        projects-conf: [
+          integration/ServiceTestRuleSample,
+          runner/AndroidJunitRunnerSample,
+          runner/AndroidTestOrchestratorSample,
+          ui/espresso/AccessibilitySample,
+          ui/espresso/BasicSample,
+          ui/espresso/CustomMatcherSample,
+          ui/espresso/DataAdapterSample,
+          ui/espresso/EspressoDeviceSample,
+          ui/espresso/FragmentScenarioSample,
+          ui/espresso/IdlingResourceSample,
+          ui/espresso/IntentsAdvancedSample,
+          ui/espresso/IntentsBasicSample,
+          ui/espresso/MultiWindowSample,
+          ui/espresso/MultiProcessSample,
+          ui/espresso/RecyclerViewSample,
+          ui/espresso/ScreenshotSample,
+          ui/espresso/WebBasicSample,
+          ui/uiautomator/BasicSample,
+          unit/BasicNativeAndroidTest
+          ]
+    runs-on: macos-latest # Needed for emulators
+    defaults:
+      run:
+        shell: bash
+    timeout-minutes: 45
+    env:
+      JAVA_TOOL_OPTIONS: -Xmx5120m
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches/modules-*
+            ~/.gradle/caches/jars-*
+            ~/.gradle/caches/build-cache-*
+          key: gradle-${{ hashFiles('checksum.txt') }}
+
+      # Needed to accept licenses
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+      
+      - name: Run All Tests
+        run: |
+          #!/bin/bash
+          set -e  # Exit immediately if a command exits with a non-zero status.
+
+          echo
+          echo
+          echo Running unit and Android tests in the projects-conf matrix
+          echo "====================================================================="
+
+          ./gradlew ${{ matrix.projects-conf }} testDebug nexusOneApi30DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testoptions.manageddevices.emulator.partition-size="3072"
+
+      - name: Upload build reports
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-reports
+          path: |
+            **/app/build/reports/
+
+      - name: Upload all outputs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: outputs
+          path: | 
+            **/app/build/outputs/
