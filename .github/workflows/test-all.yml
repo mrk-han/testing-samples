@@ -36,6 +36,7 @@ jobs:
           unit/BasicNativeAndroidTest
           ]
     runs-on: macos-latest # Needed for emulators
+    runs-on: macos-12 # Needed for emulators
     defaults:
       run:
         shell: bash
