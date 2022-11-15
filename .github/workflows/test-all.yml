@@ -65,7 +65,7 @@ jobs:
       - name: Run FFMPEG
         run: |
           brew install ffmpeg
-          ffmpeg -nostdin -f avfoundation -i 0 recording.mov &
+          ffmpeg -nostdin -f avfoundation -i 0 ${{ matrix.projects-conf }}.mov &
       
       - name: Run All Tests
         run: |
@@ -108,4 +108,5 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: Recording
-          path: recording.mov
+          path: |
+            **/*.mov
