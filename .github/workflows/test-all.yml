@@ -1,6 +1,7 @@
 name: Run all tests in every sample
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
