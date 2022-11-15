@@ -62,6 +62,11 @@ jobs:
       # Needed to accept licenses
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
+
+      - name: Run FFMPEG
+        run: |
+          brew install ffmpeg
+          ffmpeg -nostdin -f avfoundation -i 0 recording.mov &
       
       - name: Run All Tests
         run: |
@@ -74,6 +79,13 @@ jobs:
           echo "====================================================================="
 
           ./gradlew ${{ matrix.projects-conf }} testDebug nexusOneApi30DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testoptions.manageddevices.emulator.partition-size="3072"
+
+      - name: Stop Recording
+        continue-on-error: true
+        shell: bash
+        run: |
+          PID=$(ps aux | grep -m 1 ffmpeg | awk '{print $2}')
+          python -c "import os, signal; os.kill($PID, signal.SIGINT)"
 
       - name: Upload build reports
         if: always()
@@ -90,3 +102,11 @@ jobs:
           name: outputs
           path: | 
             **/app/build/outputs/
+
+      - name: Upload Videos
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@master
+        with:
+          name: Recording
+          path: recording.mov
