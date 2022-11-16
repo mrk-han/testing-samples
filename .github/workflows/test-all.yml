@@ -71,14 +71,16 @@ jobs:
       - name: Run All Tests
         run: |
           #!/bin/bash
-          set -e  # Exit immediately if a command exits with a non-zero status.
-
+          set -e # Exit immediately if a command exits with a non-zero status.
+          
+          pushd ${{ matrix.projects-conf }} > /dev/null
           echo
           echo
-          echo Running unit and Android tests in the projects-conf matrix
+          echo Running unit and Android tests in the ${{ matrix.projects-conf }} directory
           echo "====================================================================="
-
-          ${{ matrix.projects-conf }} ./gradlew ${{ matrix.projects-conf }} testDebug nexusOneApi30DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testoptions.manageddevices.emulator.partition-size="3072"
+          echo "====================================================================="
+          
+          ./gradlew testDebug nexusOneApi30DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testoptions.manageddevices.emulator.partition-size="3072"
 
       - name: Stop Recording
         continue-on-error: true
