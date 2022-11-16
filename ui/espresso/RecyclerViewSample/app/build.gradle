@@ -39,6 +39,7 @@ android {
         abortOnError false
     }
     testOptions {
+        animationsDisabled = true
         unitTests {
             includeAndroidResources = true
         }

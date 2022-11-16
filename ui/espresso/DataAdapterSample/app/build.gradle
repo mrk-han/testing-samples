@@ -15,6 +15,7 @@ android {
     productFlavors {
     }
     testOptions {
+        animationsDisabled = true
         unitTests {
             includeAndroidResources = true
         }

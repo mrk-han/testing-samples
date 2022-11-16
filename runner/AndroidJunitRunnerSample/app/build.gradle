@@ -22,6 +22,7 @@ android {
     productFlavors {
     }
     testOptions {
+        animationsDisabled = true
         managedDevices {
             devices {
                 // run with ../gradlew nexusOneApi30DebugAndroidTest
