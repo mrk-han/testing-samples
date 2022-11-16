@@ -78,7 +78,7 @@ jobs:
           echo Running unit and Android tests in the projects-conf matrix
           echo "====================================================================="
 
-          ./gradlew ${{ matrix.projects-conf }} testDebug nexusOneApi30DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testoptions.manageddevices.emulator.partition-size="3072"
+          ${{ matrix.projects-conf }} ./gradlew ${{ matrix.projects-conf }} testDebug nexusOneApi30DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testoptions.manageddevices.emulator.partition-size="3072"
 
       - name: Stop Recording
         continue-on-error: true
