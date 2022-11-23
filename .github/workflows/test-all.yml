@@ -103,7 +103,7 @@ jobs:
             **/app/build/reports/
 
       - name: Upload all outputs
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v2
         with:
           name: outputs
