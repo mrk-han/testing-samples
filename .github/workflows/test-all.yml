@@ -1,0 +1,120 @@
+name: Run all tests in every sample
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        projects-conf: [
+          integration/ServiceTestRuleSample,
+          runner/AndroidJunitRunnerSample,
+          runner/AndroidTestOrchestratorSample,
+          ui/espresso/AccessibilitySample,
+          ui/espresso/BasicSample,
+          ui/espresso/CustomMatcherSample,
+          ui/espresso/DataAdapterSample,
+          ui/espresso/EspressoDeviceSample,
+          ui/espresso/FragmentScenarioSample,
+          ui/espresso/IdlingResourceSample,
+          ui/espresso/IntentsAdvancedSample,
+          ui/espresso/IntentsBasicSample,
+          ui/espresso/MultiWindowSample,
+          ui/espresso/MultiProcessSample,
+          ui/espresso/RecyclerViewSample,
+          ui/espresso/ScreenshotSample,
+          ui/espresso/WebBasicSample,
+          ui/uiautomator/BasicSample,
+          unit/BasicNativeAndroidTest
+          ]
+    runs-on: macos-12 # Needed for emulators
+    defaults:
+      run:
+        shell: bash
+    timeout-minutes: 45
+    env:
+      JAVA_TOOL_OPTIONS: -Xmx5120m
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # Needed to accept licenses
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Run FFMPEG
+        run: |
+          brew install ffmpeg
+          ffmpeg -nostdin -f avfoundation -i 0 ${{ matrix.projects-conf }}.mov &
+      
+      - name: Run All Tests
+        run: |
+          #!/bin/bash
+          set -e # Exit immediately if a command exits with a non-zero status.
+          
+          pushd ${{ matrix.projects-conf }} > /dev/null
+          echo
+          echo
+          echo Running unit and Android tests in the ${{ matrix.projects-conf }} directory
+          echo "====================================================================="
+          echo "====================================================================="
+          
+          ./gradlew testDebug nexusOneApi30DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testoptions.manageddevices.emulator.partition-size="3072"
+
+      - name: Stop Recording
+        continue-on-error: true
+        shell: bash
+        run: |
+          PID=$(ps aux | grep -m 1 ffmpeg | awk '{print $2}')
+          python -c "import os, signal; os.kill($PID, signal.SIGINT)"
+
+      - name: Upload build reports
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-reports
+          path: |
+            **/app/build/reports/
+
+      - name: Upload all outputs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: outputs
+          path: | 
+            **/app/build/outputs/
+
+      - name: Upload Videos
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@master
+        with:
+          name: Recording
+          path: |
+            **/*.mov
